@@ -1,0 +1,1107 @@
+openapi: 3.1.0
+info:
+  title: Api
+  version: 0.1.0
+  description: Artwork Catalogue API
+servers:
+  - url: /api
+    description: Base API path
+tags:
+  - name: health
+    description: Health operations
+  - name: artworks
+    description: Artwork management
+  - name: locations
+    description: Location management
+  - name: loans
+    description: Loan management
+  - name: documents
+    description: Document management
+  - name: goals
+    description: Collection goals
+
+paths:
+  /healthz:
+    get:
+      operationId: healthCheck
+      tags: [health]
+      summary: Health check
+      responses:
+        "200":
+          description: Healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthStatus"
+
+  /artworks:
+    get:
+      operationId: listArtworks
+      tags: [artworks]
+      summary: List all artworks
+      parameters:
+        - name: locationId
+          in: query
+          schema: { type: ["integer", "null"] }
+        - name: artist
+          in: query
+          schema: { type: ["string", "null"] }
+        - name: medium
+          in: query
+          schema: { type: ["string", "null"] }
+        - name: onLoan
+          in: query
+          schema: { type: ["boolean", "null"] }
+        - name: search
+          in: query
+          schema: { type: ["string", "null"] }
+        - name: yearFrom
+          in: query
+          schema: { type: ["integer", "null"] }
+        - name: yearTo
+          in: query
+          schema: { type: ["integer", "null"] }
+      responses:
+        "200":
+          description: List of artworks
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Artwork"
+    post:
+      operationId: createArtwork
+      tags: [artworks]
+      summary: Create a new artwork
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ArtworkInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Artwork"
+
+  /artworks/summary:
+    get:
+      operationId: getArtworkSummary
+      tags: [artworks]
+      summary: Get catalogue summary stats
+      responses:
+        "200":
+          description: Summary statistics
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ArtworkSummary"
+
+  /artworks/keywords:
+    get:
+      operationId: listArtworkKeywords
+      tags: [artworks]
+      summary: Get all unique keywords used across the collection
+      responses:
+        "200":
+          description: Unique keywords
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+
+  /artworks/{id}:
+    get:
+      operationId: getArtwork
+      tags: [artworks]
+      summary: Get a single artwork with full details
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: Artwork detail
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ArtworkDetail"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    patch:
+      operationId: updateArtwork
+      tags: [artworks]
+      summary: Update an artwork
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ArtworkUpdate"
+      responses:
+        "200":
+          description: Updated artwork
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Artwork"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    delete:
+      operationId: deleteArtwork
+      tags: [artworks]
+      summary: Delete an artwork
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        "204":
+          description: Deleted
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /artworks/{id}/provenance:
+    get:
+      operationId: listProvenance
+      tags: [artworks]
+      summary: List provenance records for an artwork
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: Provenance records
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ProvenanceRecord"
+    post:
+      operationId: addProvenance
+      tags: [artworks]
+      summary: Add a provenance record
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProvenanceInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProvenanceRecord"
+
+  /artworks/{id}/provenance/{provenanceId}:
+    patch:
+      operationId: updateProvenance
+      tags: [artworks]
+      summary: Update a provenance record
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+        - name: provenanceId
+          in: path
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProvenanceUpdate"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProvenanceRecord"
+    delete:
+      operationId: deleteProvenance
+      tags: [artworks]
+      summary: Delete a provenance record
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+        - name: provenanceId
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        "204":
+          description: Deleted
+
+  /artworks/{id}/condition-reports:
+    get:
+      operationId: listConditionReports
+      tags: [artworks]
+      summary: List condition reports for an artwork
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: Condition reports
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ConditionReport"
+    post:
+      operationId: addConditionReport
+      tags: [artworks]
+      summary: Add a condition report
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ConditionReportInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ConditionReport"
+
+  /artworks/{id}/documents:
+    get:
+      operationId: listDocuments
+      tags: [artworks]
+      summary: List documents for an artwork
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: Documents
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Document"
+    post:
+      operationId: addDocument
+      tags: [artworks]
+      summary: Add a document to an artwork
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DocumentInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Document"
+
+  /artworks/{id}/documents/{documentId}:
+    delete:
+      operationId: deleteDocument
+      tags: [artworks]
+      summary: Delete a document
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+        - name: documentId
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        "204":
+          description: Deleted
+
+  /artworks/{id}/pricing:
+    get:
+      operationId: getArtworkPricing
+      tags: [artworks]
+      summary: Get pricing for an artwork
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: Pricing data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Pricing"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    put:
+      operationId: upsertArtworkPricing
+      tags: [artworks]
+      summary: Set or update pricing for an artwork
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PricingInput"
+      responses:
+        "200":
+          description: Pricing data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Pricing"
+
+  /artworks/{id}/loans:
+    get:
+      operationId: listArtworkLoans
+      tags: [artworks]
+      summary: List loans for an artwork
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: Loans
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Loan"
+    post:
+      operationId: createArtworkLoan
+      tags: [artworks]
+      summary: Create a loan for an artwork
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoanInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Loan"
+
+  /artworks/{id}/loans/{loanId}:
+    patch:
+      operationId: updateArtworkLoan
+      tags: [artworks]
+      summary: Update a loan
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+        - name: loanId
+          in: path
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoanUpdate"
+      responses:
+        "200":
+          description: Updated loan
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Loan"
+    delete:
+      operationId: deleteArtworkLoan
+      tags: [artworks]
+      summary: Delete a loan record
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+        - name: loanId
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        "204":
+          description: Deleted
+
+  /locations:
+    get:
+      operationId: listLocations
+      tags: [locations]
+      summary: List all locations in tree structure
+      responses:
+        "200":
+          description: Locations
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Location"
+    post:
+      operationId: createLocation
+      tags: [locations]
+      summary: Create a new location
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LocationInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Location"
+
+  /locations/{id}:
+    get:
+      operationId: getLocation
+      tags: [locations]
+      summary: Get a location
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: Location
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Location"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    patch:
+      operationId: updateLocation
+      tags: [locations]
+      summary: Update a location
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LocationUpdate"
+      responses:
+        "200":
+          description: Updated location
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Location"
+    delete:
+      operationId: deleteLocation
+      tags: [locations]
+      summary: Delete a location
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        "204":
+          description: Deleted
+
+  /locations/{id}/artworks:
+    get:
+      operationId: getLocationArtworks
+      tags: [locations]
+      summary: Get all artworks at a location (including sub-locations)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: Artworks at location
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Artwork"
+
+  /loans:
+    get:
+      operationId: listLoans
+      tags: [loans]
+      summary: List all loans
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: ["string", "null"]
+            enum: ["active", "returned", "overdue", null]
+      responses:
+        "200":
+          description: Loans
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/LoanWithArtwork"
+
+  /goals:
+    get:
+      operationId: listGoals
+      tags: [goals]
+      summary: List all collection goals
+      responses:
+        "200":
+          description: Goals
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Goal"
+    post:
+      operationId: createGoal
+      tags: [goals]
+      summary: Create a new goal
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GoalInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Goal"
+
+  /goals/{id}:
+    delete:
+      operationId: deleteGoal
+      tags: [goals]
+      summary: Delete a goal
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        "204":
+          description: Deleted
+
+  /goals/{id}/analyze:
+    post:
+      operationId: analyzeGoal
+      tags: [goals]
+      summary: Run AI analysis on a goal against the current collection
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: Updated goal with AI analysis
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Goal"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /loans/upcoming-returns:
+    get:
+      operationId: getUpcomingReturns
+      tags: [loans]
+      summary: Get loans with upcoming return dates
+      parameters:
+        - name: daysAhead
+          in: query
+          schema: { type: ["integer", "null"] }
+      responses:
+        "200":
+          description: Upcoming returns
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/LoanWithArtwork"
+
+components:
+  schemas:
+    HealthStatus:
+      type: object
+      properties:
+        status:
+          type: string
+      required:
+        - status
+
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+      required:
+        - error
+
+    Artwork:
+      type: object
+      required: [id, title, createdAt, updatedAt]
+      properties:
+        id: { type: integer }
+        title: { type: string }
+        artist: { type: ["string", "null"] }
+        year: { type: ["integer", "null"] }
+        medium: { type: ["string", "null"] }
+        keywords: { type: ["string", "null"] }
+        width: { type: ["number", "null"] }
+        height: { type: ["number", "null"] }
+        depth: { type: ["number", "null"] }
+        dimensionUnit: { type: ["string", "null"] }
+        imageUrl: { type: ["string", "null"] }
+        notes: { type: ["string", "null"] }
+        locationId: { type: ["integer", "null"] }
+        locationName: { type: ["string", "null"] }
+        onLoan: { type: boolean }
+        createdAt: { type: string }
+        updatedAt: { type: string }
+
+    ArtworkDetail:
+      type: object
+      required: [id, title, createdAt, updatedAt]
+      properties:
+        id: { type: integer }
+        title: { type: string }
+        artist: { type: ["string", "null"] }
+        year: { type: ["integer", "null"] }
+        medium: { type: ["string", "null"] }
+        keywords: { type: ["string", "null"] }
+        width: { type: ["number", "null"] }
+        height: { type: ["number", "null"] }
+        depth: { type: ["number", "null"] }
+        dimensionUnit: { type: ["string", "null"] }
+        imageUrl: { type: ["string", "null"] }
+        notes: { type: ["string", "null"] }
+        locationId: { type: ["integer", "null"] }
+        locationName: { type: ["string", "null"] }
+        onLoan: { type: boolean }
+        createdAt: { type: string }
+        updatedAt: { type: string }
+        provenance:
+          type: array
+          items:
+            $ref: "#/components/schemas/ProvenanceRecord"
+        conditionReports:
+          type: array
+          items:
+            $ref: "#/components/schemas/ConditionReport"
+        documents:
+          type: array
+          items:
+            $ref: "#/components/schemas/Document"
+        pricing:
+          $ref: "#/components/schemas/Pricing"
+          nullable: true
+        activeLoans:
+          type: array
+          items:
+            $ref: "#/components/schemas/Loan"
+
+    ArtworkInput:
+      type: object
+      required: [title]
+      properties:
+        title: { type: string, minLength: 1 }
+        artist: { type: string }
+        year: { type: integer }
+        medium: { type: string }
+        keywords: { type: string }
+        width: { type: number }
+        height: { type: number }
+        depth: { type: number }
+        dimensionUnit: { type: string }
+        imageUrl: { type: string }
+        notes: { type: string }
+        locationId: { type: integer }
+
+    ArtworkUpdate:
+      type: object
+      properties:
+        title: { type: string, minLength: 1 }
+        artist: { type: string }
+        year: { type: integer }
+        medium: { type: string }
+        keywords: { type: string }
+        width: { type: number }
+        height: { type: number }
+        depth: { type: number }
+        dimensionUnit: { type: string }
+        imageUrl: { type: string }
+        notes: { type: string }
+        locationId: { type: ["integer", "null"] }
+
+    ArtworkSummary:
+      type: object
+      required: [totalArtworks, onLoanCount, totalCurrentValueUsd, byMedium, byLocation, recentlyAdded]
+      properties:
+        totalArtworks: { type: integer }
+        onLoanCount: { type: integer }
+        totalCurrentValueUsd: { type: ["number", "null"] }
+        byMedium:
+          type: array
+          items:
+            type: object
+            required: [medium, count]
+            properties:
+              medium: { type: string }
+              count: { type: integer }
+        byLocation:
+          type: array
+          items:
+            type: object
+            required: [locationId, locationName, count]
+            properties:
+              locationId: { type: integer }
+              locationName: { type: string }
+              count: { type: integer }
+        recentlyAdded:
+          type: array
+          items:
+            $ref: "#/components/schemas/Artwork"
+
+    ProvenanceRecord:
+      type: object
+      required: [id, artworkId, createdAt]
+      properties:
+        id: { type: integer }
+        artworkId: { type: integer }
+        date: { type: ["string", "null"] }
+        description: { type: ["string", "null"] }
+        source: { type: ["string", "null"] }
+        price: { type: ["number", "null"] }
+        currency: { type: ["string", "null"] }
+        createdAt: { type: string }
+
+    ProvenanceInput:
+      type: object
+      properties:
+        date: { type: string }
+        description: { type: string }
+        source: { type: string }
+        price: { type: number }
+        currency: { type: string }
+
+    ProvenanceUpdate:
+      type: object
+      properties:
+        date: { type: string }
+        description: { type: string }
+        source: { type: string }
+        price: { type: number }
+        currency: { type: string }
+
+    ConditionReport:
+      type: object
+      required: [id, artworkId, createdAt]
+      properties:
+        id: { type: integer }
+        artworkId: { type: integer }
+        date: { type: ["string", "null"] }
+        condition: { type: ["string", "null"] }
+        notes: { type: ["string", "null"] }
+        inspector: { type: ["string", "null"] }
+        createdAt: { type: string }
+
+    ConditionReportInput:
+      type: object
+      properties:
+        date: { type: string }
+        condition: { type: string }
+        notes: { type: string }
+        inspector: { type: string }
+
+    Document:
+      type: object
+      required: [id, artworkId, name, createdAt]
+      properties:
+        id: { type: integer }
+        artworkId: { type: integer }
+        name: { type: string }
+        type: { type: ["string", "null"] }
+        url: { type: ["string", "null"] }
+        fileSize: { type: ["integer", "null"] }
+        createdAt: { type: string }
+
+    DocumentInput:
+      type: object
+      required: [name]
+      properties:
+        name: { type: string }
+        type: { type: string }
+        url: { type: string }
+        fileSize: { type: integer }
+
+    Pricing:
+      type: object
+      required: [id, artworkId, createdAt, updatedAt]
+      properties:
+        id: { type: integer }
+        artworkId: { type: integer }
+        purchasePrice: { type: ["number", "null"] }
+        purchaseCurrency: { type: ["string", "null"] }
+        usdConversionRate: { type: ["number", "null"] }
+        purchasePriceUsd: { type: ["number", "null"] }
+        framingCost: { type: ["number", "null"] }
+        framingCurrency: { type: ["string", "null"] }
+        framingUsdRate: { type: ["number", "null"] }
+        shippingCost: { type: ["number", "null"] }
+        shippingCurrency: { type: ["string", "null"] }
+        shippingUsdRate: { type: ["number", "null"] }
+        taxesCost: { type: ["number", "null"] }
+        taxesCurrency: { type: ["string", "null"] }
+        taxesUsdRate: { type: ["number", "null"] }
+        otherCosts: { type: ["number", "null"] }
+        otherCostsDescription: { type: ["string", "null"] }
+        otherCurrency: { type: ["string", "null"] }
+        otherUsdRate: { type: ["number", "null"] }
+        displayCurrency: { type: ["string", "null"] }
+        displayCurrencyRate: { type: ["number", "null"] }
+        totalPurchaseValueUsd: { type: ["number", "null"] }
+        totalCostInCurrency: { type: ["number", "null"] }
+        currentValueUsd: { type: ["number", "null"] }
+        valuationDate: { type: ["string", "null"] }
+        valuationNotes: { type: ["string", "null"] }
+        createdAt: { type: string }
+        updatedAt: { type: string }
+
+    PricingInput:
+      type: object
+      properties:
+        purchasePrice: { type: number }
+        purchaseCurrency: { type: string }
+        usdConversionRate: { type: number }
+        framingCost: { type: number }
+        framingCurrency: { type: string }
+        framingUsdRate: { type: number }
+        shippingCost: { type: number }
+        shippingCurrency: { type: string }
+        shippingUsdRate: { type: number }
+        taxesCost: { type: number }
+        taxesCurrency: { type: string }
+        taxesUsdRate: { type: number }
+        otherCosts: { type: number }
+        otherCostsDescription: { type: string }
+        otherCurrency: { type: string }
+        otherUsdRate: { type: number }
+        displayCurrency: { type: string }
+        displayCurrencyRate: { type: number }
+        currentValueUsd: { type: number }
+        valuationDate: { type: string }
+        valuationNotes: { type: string }
+
+    Location:
+      type: object
+      required: [id, name, createdAt]
+      properties:
+        id: { type: integer }
+        name: { type: string }
+        parentId: { type: ["integer", "null"] }
+        description: { type: ["string", "null"] }
+        artworkCount: { type: integer }
+        children:
+          type: array
+          items:
+            $ref: "#/components/schemas/Location"
+        createdAt: { type: string }
+
+    LocationInput:
+      type: object
+      required: [name]
+      properties:
+        name: { type: string, minLength: 1 }
+        parentId: { type: integer }
+        description: { type: string }
+
+    LocationUpdate:
+      type: object
+      properties:
+        name: { type: string, minLength: 1 }
+        parentId: { type: ["integer", "null"] }
+        description: { type: string }
+
+    Loan:
+      type: object
+      required: [id, artworkId, createdAt, updatedAt]
+      properties:
+        id: { type: integer }
+        artworkId: { type: integer }
+        loanee: { type: ["string", "null"] }
+        institution: { type: ["string", "null"] }
+        purpose: { type: ["string", "null"] }
+        startDate: { type: ["string", "null"] }
+        endDate: { type: ["string", "null"] }
+        status: { type: string }
+        notes: { type: ["string", "null"] }
+        daysUntilReturn: { type: ["integer", "null"] }
+        createdAt: { type: string }
+        updatedAt: { type: string }
+
+    LoanInput:
+      type: object
+      properties:
+        loanee: { type: string }
+        institution: { type: string }
+        purpose: { type: string }
+        startDate: { type: string }
+        endDate: { type: string }
+        notes: { type: string }
+
+    LoanUpdate:
+      type: object
+      properties:
+        loanee: { type: string }
+        institution: { type: string }
+        purpose: { type: string }
+        startDate: { type: string }
+        endDate: { type: string }
+        status: { type: string }
+        notes: { type: string }
+
+    LoanWithArtwork:
+      type: object
+      required: [id, artworkId, createdAt, updatedAt]
+      properties:
+        id: { type: integer }
+        artworkId: { type: integer }
+        artworkTitle: { type: string }
+        artworkArtist: { type: ["string", "null"] }
+        artworkImageUrl: { type: ["string", "null"] }
+        loanee: { type: ["string", "null"] }
+        institution: { type: ["string", "null"] }
+        purpose: { type: ["string", "null"] }
+        startDate: { type: ["string", "null"] }
+        endDate: { type: ["string", "null"] }
+        status: { type: string }
+        notes: { type: ["string", "null"] }
+        daysUntilReturn: { type: ["integer", "null"] }
+        createdAt: { type: string }
+        updatedAt: { type: string }
+
+    Goal:
+      type: object
+      required: [id, title, createdAt, updatedAt]
+      properties:
+        id: { type: integer }
+        title: { type: string }
+        description: { type: ["string", "null"] }
+        lastAnalysis: { type: ["string", "null"] }
+        lastAnalysisAt: { type: ["string", "null"] }
+        createdAt: { type: string }
+        updatedAt: { type: string }
+
+    GoalInput:
+      type: object
+      required: [title]
+      properties:
+        title: { type: string, minLength: 1 }
+        description: { type: string }
