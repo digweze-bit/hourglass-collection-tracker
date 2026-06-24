@@ -3,6 +3,7 @@ import { Switch, Route, Router as WouterRouter } from "wouter";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { AuthProvider, useAuth } from "@/context/auth-context";
 import NotFound from "@/pages/not-found";
 import { Layout } from "@/components/layout";
 import Home from "@/pages/home";
@@ -16,13 +17,34 @@ import Loans from "@/pages/loans";
 import Reports from "@/pages/reports";
 import Settings from "@/pages/settings";
 import Goals from "@/pages/goals";
-import { LoginModal } from "@/components/login-modal";
-import { useSettings } from "@/hooks/use-settings";
-import { isSessionUnlocked } from "@/lib/auth";
+import LoginPage from "@/pages/login";
+import PendingPage from "@/pages/pending";
+import AdminPage from "@/pages/admin";
 
 const queryClient = new QueryClient();
 
-function Router() {
+function AppRoutes() {
+  const { user, profile, loading } = useAuth();
+
+  if (loading) return (
+    <div className="min-h-screen flex items-center justify-center">
+      <div className="text-center space-y-3">
+        <img src="/hourglass-logo.jpg" alt="Hourglass" className="w-24 mx-auto object-contain opacity-50" />
+        <p className="text-xs text-muted-foreground uppercase tracking-widest">Loading...</p>
+      </div>
+    </div>
+  );
+
+  // Not logged in
+  if (!user) return <LoginPage />;
+
+  // Admin route — accessible before approval check
+  if (typeof window !== "undefined" && window.location.pathname === "/admin") return <AdminPage />;
+
+  // Logged in but not approved
+  if (!profile?.approved) return <PendingPage />;
+
+  // Fully authenticated and approved
   return (
     <Layout>
       <Switch>
@@ -43,29 +65,16 @@ function Router() {
   );
 }
 
-function AppWithAuth() {
-  const { settings } = useSettings();
-  const [unlocked, setUnlocked] = useState(
-    () => !settings.usePassword || !settings.passwordHash || isSessionUnlocked()
-  );
-  return (
-    <>
-      <Router />
-      {!unlocked && (
-        <LoginModal passwordHash={settings.passwordHash} collectionOwner={settings.collectionOwner} onUnlock={() => setUnlocked(true)} />
-      )}
-    </>
-  );
-}
-
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
-        <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
-          <AppWithAuth />
-        </WouterRouter>
-        <Toaster />
+        <AuthProvider>
+          <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
+            <AppRoutes />
+          </WouterRouter>
+          <Toaster />
+        </AuthProvider>
       </TooltipProvider>
     </QueryClientProvider>
   );

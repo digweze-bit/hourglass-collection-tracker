@@ -4,8 +4,9 @@ import {
   SidebarGroup, SidebarGroupContent, SidebarMenu, SidebarMenuItem,
   SidebarMenuButton, SidebarTrigger, SidebarInset, useSidebar,
 } from "@/components/ui/sidebar";
-import { Home, Library, MapPin, CalendarClock, FileText, Plus, Settings, Users, Target, Upload } from "lucide-react";
-import { useSettings } from "@/hooks/use-settings";
+import { Home, Library, MapPin, CalendarClock, FileText, Plus, Settings, Users, Target, Upload, LogOut } from "lucide-react";
+import { useAuth } from "@/context/auth-context";
+import { Button } from "@/components/ui/button";
 
 const navItems = [
   { label: "Home", href: "/", icon: Home },
@@ -21,51 +22,40 @@ const navItems = [
 function SidebarNav() {
   const [location] = useLocation();
   const { setOpenMobile, isMobile } = useSidebar();
-  const { settings } = useSettings();
+  const { profile, signOut } = useAuth();
 
-  function closeIfNeeded() {
-    if (isMobile) setOpenMobile(false);
-  }
+  function closeIfNeeded() { if (isMobile) setOpenMobile(false); }
+
+  const ownerName = profile?.full_name || "";
 
   return (
     <>
       <SidebarHeader className="px-6 pt-7 pb-4">
-        {settings.collectionOwner ? (
+        {ownerName ? (
           <div className="leading-tight mb-1">
-            {settings.collectionOwner.split(" ").length > 1 ? (
+            {ownerName.split(" ").length > 1 ? (
               <>
-                <p className="text-[16px] tracking-[0.08em] uppercase font-bold text-foreground">
-                  {settings.collectionOwner.split(" ").slice(0, -1).join(" ")}
-                </p>
-                <p className="text-[16px] tracking-[0.08em] uppercase font-bold text-foreground">
-                  {settings.collectionOwner.split(" ").slice(-1)[0]}
-                </p>
+                <p className="text-[16px] tracking-[0.08em] uppercase font-bold text-foreground">{ownerName.split(" ").slice(0, -1).join(" ")}</p>
+                <p className="text-[16px] tracking-[0.08em] uppercase font-bold text-foreground">{ownerName.split(" ").slice(-1)[0]}</p>
               </>
             ) : (
-              <p className="text-[16px] tracking-[0.08em] uppercase font-bold text-foreground">
-                {settings.collectionOwner}
-              </p>
+              <p className="text-[16px] tracking-[0.08em] uppercase font-bold text-foreground">{ownerName}</p>
             )}
           </div>
-        ) : (
-          <div className="mb-1 h-10" />
-        )}
+        ) : <div className="mb-1 h-10" />}
       </SidebarHeader>
 
       <SidebarContent>
         <SidebarGroup>
           <SidebarGroupContent>
             <SidebarMenu className="gap-2 px-4 py-4">
-              {navItems.map((item) => (
+              {navItems.map(item => (
                 <SidebarMenuItem key={item.href}>
-                  <SidebarMenuButton
-                    asChild
+                  <SidebarMenuButton asChild
                     isActive={location === item.href || (item.href !== "/" && location.startsWith(item.href))}
-                    className="font-medium tracking-wide text-[13px] text-muted-foreground hover:text-foreground data-[active=true]:text-foreground data-[active=true]:bg-accent/50"
-                  >
+                    className="font-medium tracking-wide text-[13px] text-muted-foreground hover:text-foreground data-[active=true]:text-foreground data-[active=true]:bg-accent/50">
                     <Link href={item.href} className="flex items-center gap-3 py-2" onClick={closeIfNeeded}>
-                      <item.icon className="h-4 w-4" />
-                      <span>{item.label}</span>
+                      <item.icon className="h-4 w-4" /><span>{item.label}</span>
                     </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
@@ -95,10 +85,14 @@ function SidebarNav() {
         <Link href="/" onClick={closeIfNeeded}>
           <img src="/hourglass-logo.jpg" alt="Hourglass" className="w-full max-w-[112px] mb-3 object-contain" />
         </Link>
-        <div className="leading-snug space-y-0.5">
+        <div className="leading-snug space-y-0.5 mb-4">
           <p className="text-[11px] tracking-[0.18em] uppercase font-light text-muted-foreground">Collection</p>
           <p className="text-[11px] tracking-[0.18em] uppercase font-light text-muted-foreground">Tracker</p>
         </div>
+        <Button variant="ghost" size="sm" onClick={signOut} className="w-full justify-start gap-2 text-muted-foreground hover:text-foreground px-0 h-7">
+          <LogOut className="h-3.5 w-3.5" />
+          <span className="text-xs">Sign out</span>
+        </Button>
       </SidebarFooter>
     </>
   );
