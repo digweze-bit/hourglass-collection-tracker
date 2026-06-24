@@ -38,13 +38,12 @@ function AppRoutes() {
   // Not logged in
   if (!user) return <LoginPage />;
 
-  // Admin route — accessible before approval check
-  if (typeof window !== "undefined" && window.location.pathname === "/admin") return <AdminPage />;
+  // Admin route — accessible to admin email regardless of approval
+  const isAdmin = user.email === "info@hourglassgallery.com";
 
-  // Logged in but not approved
-  if (!profile?.approved) return <PendingPage />;
+  // Logged in but not approved (unless admin)
+  if (!profile?.approved && !isAdmin) return <PendingPage />;
 
-  // Fully authenticated and approved
   return (
     <Layout>
       <Switch>
@@ -59,6 +58,7 @@ function AppRoutes() {
         <Route path="/goals" component={Goals} />
         <Route path="/reports" component={Reports} />
         <Route path="/settings" component={Settings} />
+        <Route path="/admin" component={AdminPage} />
         <Route component={NotFound} />
       </Switch>
     </Layout>
