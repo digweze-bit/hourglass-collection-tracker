@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Switch, Route, Router as WouterRouter } from "wouter";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
@@ -15,6 +16,9 @@ import Loans from "@/pages/loans";
 import Reports from "@/pages/reports";
 import Settings from "@/pages/settings";
 import Goals from "@/pages/goals";
+import { LoginModal } from "@/components/login-modal";
+import { useSettings } from "@/hooks/use-settings";
+import { isSessionUnlocked } from "@/lib/auth";
 
 const queryClient = new QueryClient();
 
@@ -39,12 +43,27 @@ function Router() {
   );
 }
 
+function AppWithAuth() {
+  const { settings } = useSettings();
+  const [unlocked, setUnlocked] = useState(
+    () => !settings.usePassword || !settings.passwordHash || isSessionUnlocked()
+  );
+  return (
+    <>
+      <Router />
+      {!unlocked && (
+        <LoginModal passwordHash={settings.passwordHash} collectionOwner={settings.collectionOwner} onUnlock={() => setUnlocked(true)} />
+      )}
+    </>
+  );
+}
+
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
-          <Router />
+          <AppWithAuth />
         </WouterRouter>
         <Toaster />
       </TooltipProvider>

@@ -29,25 +29,14 @@ function readSettings(): CatalogueSettings {
     const parsed = JSON.parse(raw) as Partial<CatalogueSettings>;
     return {
       openingMode: parsed.openingMode === "fixed" ? "fixed" : "random",
-      pinnedArtworkId:
-        typeof parsed.pinnedArtworkId === "number"
-          ? parsed.pinnedArtworkId
-          : null,
+      pinnedArtworkId: typeof parsed.pinnedArtworkId === "number" ? parsed.pinnedArtworkId : null,
       customCurrencies: Array.isArray(parsed.customCurrencies)
-        ? parsed.customCurrencies.filter(
-            (c): c is string => typeof c === "string"
-          )
+        ? parsed.customCurrencies.filter((c): c is string => typeof c === "string")
         : [],
-      collectionOwner:
-        typeof parsed.collectionOwner === "string"
-          ? parsed.collectionOwner
-          : "",
-      userEmail:
-        typeof parsed.userEmail === "string" ? parsed.userEmail : "",
-      passwordHash:
-        typeof parsed.passwordHash === "string" ? parsed.passwordHash : "",
-      usePassword:
-        typeof parsed.usePassword === "boolean" ? parsed.usePassword : false,
+      collectionOwner: typeof parsed.collectionOwner === "string" ? parsed.collectionOwner : "",
+      userEmail: typeof parsed.userEmail === "string" ? parsed.userEmail : "",
+      passwordHash: typeof parsed.passwordHash === "string" ? parsed.passwordHash : "",
+      usePassword: typeof parsed.usePassword === "boolean" ? parsed.usePassword : false,
     };
   } catch {
     return defaults;
@@ -56,11 +45,9 @@ function readSettings(): CatalogueSettings {
 
 export function useSettings() {
   const [settings, setSettings] = useState<CatalogueSettings>(readSettings);
-
   const saveSettings = useCallback((next: CatalogueSettings) => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
     setSettings(next);
   }, []);
-
   return { settings, saveSettings };
 }

@@ -20,6 +20,7 @@ export const pricingTable = pgTable("pricing", {
   purchaseCurrency: text("purchase_currency"),
   usdConversionRate: numeric("usd_conversion_rate", { precision: 12, scale: 6 }),
   purchasePriceUsd: numeric("purchase_price_usd", { precision: 14, scale: 2 }),
+  acquisitionDate: text("acquisition_date"),
   framingCost: numeric("framing_cost", { precision: 12, scale: 2 }),
   framingCurrency: text("framing_currency"),
   framingUsdRate: numeric("framing_usd_rate", { precision: 12, scale: 6 }),
