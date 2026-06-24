@@ -35,14 +35,14 @@ function SidebarNav() {
           <div className="leading-tight mb-1">
             {ownerName.split(" ").length > 1 ? (
               <>
-                <p className="text-[16px] tracking-[0.08em] uppercase font-bold text-foreground">{ownerName.split(" ").slice(0, -1).join(" ")}</p>
-                <p className="text-[16px] tracking-[0.08em] uppercase font-bold text-foreground">{ownerName.split(" ").slice(-1)[0]}</p>
+                <p className="text-[13px] tracking-[0.12em] uppercase font-light text-foreground/80">{ownerName.split(" ").slice(0, -1).join(" ")}</p>
+                <p className="text-[13px] tracking-[0.12em] uppercase font-light text-foreground/80">{ownerName.split(" ").slice(-1)[0]}</p>
               </>
             ) : (
-              <p className="text-[16px] tracking-[0.08em] uppercase font-bold text-foreground">{ownerName}</p>
+              <p className="text-[13px] tracking-[0.12em] uppercase font-light text-foreground/80">{ownerName}</p>
             )}
           </div>
-        ) : <div className="mb-1 h-10" />}
+        ) : <div className="mb-1 h-8" />}
       </SidebarHeader>
 
       <SidebarContent>
