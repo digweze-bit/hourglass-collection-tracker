@@ -165,6 +165,7 @@ function EditDialog({ artwork, open, onClose, locations }: { artwork: any; open:
 
 const pricingSchema = z.object({
   acquisition_date: z.string(),
+  acquisition_source: z.string(),
   purchase_price: z.string(),
   purchase_currency: z.string(),
   usd_conversion_rate: z.string(),
@@ -221,6 +222,7 @@ function PricingTab({ artworkId }: { artworkId: string }) {
     resolver: zodResolver(pricingSchema),
     values: {
       acquisition_date: p?.acquisition_date || "",
+      acquisition_source: (p as any)?.acquisition_source || "",
       purchase_price: p?.purchase_price ? String(p.purchase_price) : "",
       purchase_currency: p?.purchase_currency || "USD",
       usd_conversion_rate: p?.usd_conversion_rate ? String(p.usd_conversion_rate) : "",
@@ -330,6 +332,7 @@ function PricingTab({ artworkId }: { artworkId: string }) {
       artworkId,
       data: {
         acquisition_date: values.acquisition_date || undefined,
+        acquisition_source: values.acquisition_source || undefined,
         purchase_price: values.purchase_price ? Number(values.purchase_price) : undefined,
         purchase_currency: values.purchase_currency || undefined,
         usd_conversion_rate: values.usd_conversion_rate ? Number(values.usd_conversion_rate) : undefined,
@@ -378,6 +381,9 @@ function PricingTab({ artworkId }: { artworkId: string }) {
               <h3 className="text-xs tracking-widest uppercase text-muted-foreground border-b border-border pb-2">Acquisition</h3>
               {pricing.acquisition_date && (
                 <div className="flex justify-between text-sm"><span className="text-muted-foreground">Acquisition date</span><span>{pricing.acquisition_date}</span></div>
+              )}
+              {(pricing as any).acquisition_source && (
+                <div className="flex justify-between text-sm"><span className="text-muted-foreground">Acquisition source</span><span>{(pricing as any).acquisition_source}</span></div>
               )}
               {pricing.purchase_price ? (
                 <div className="rounded border border-border px-4 py-3">
@@ -488,6 +494,15 @@ function PricingTab({ artworkId }: { artworkId: string }) {
                     });
                   }
                 }} className="max-w-[200px]" />
+              </FormControl>
+            </FormItem>
+          )} />
+
+          <FormField control={form.control} name="acquisition_source" render={({ field }) => (
+            <FormItem>
+              <FormLabel>Acquisition Source</FormLabel>
+              <FormControl>
+                <Input placeholder="e.g. Auction, Gallery, Private sale, Gift" {...field} className="max-w-sm" />
               </FormControl>
             </FormItem>
           )} />
