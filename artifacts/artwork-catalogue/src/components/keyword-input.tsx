@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { X } from "lucide-react";
-import { useListArtworkKeywords } from "@workspace/api-client-react";
+import { useListArtworks } from "@/hooks/use-db";
 
 interface KeywordInputProps {
   value: string;
@@ -8,18 +8,20 @@ interface KeywordInputProps {
 }
 
 function parseKeywords(raw: string): string[] {
-  return raw
-    .split(",")
-    .map(k => k.trim())
-    .filter(Boolean);
+  return raw.split(",").map(k => k.trim()).filter(Boolean);
 }
 
 export function KeywordInput({ value, onChange }: KeywordInputProps) {
-  const { data: existingKeywords = [] } = useListArtworkKeywords();
+  const { data: artworks = [] } = useListArtworks();
   const [inputValue, setInputValue] = useState("");
   const [showSuggestions, setShowSuggestions] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+
+  // Collect all existing keywords from all artworks
+  const existingKeywords = Array.from(new Set(
+    artworks.flatMap(a => a.keywords ? a.keywords.split(",").map(k => k.trim()).filter(Boolean) : [])
+  )).sort();
 
   const keywords = parseKeywords(value);
 
@@ -44,11 +46,9 @@ export function KeywordInput({ value, onChange }: KeywordInputProps) {
     const trimmed = kw.trim();
     if (!trimmed) return;
     if (keywords.map(k => k.toLowerCase()).includes(trimmed.toLowerCase())) {
-      setInputValue("");
-      return;
+      setInputValue(""); return;
     }
-    const next = [...keywords, trimmed];
-    onChange(next.join(", "));
+    onChange([...keywords, trimmed].join(", "));
     setInputValue("");
     setShowSuggestions(false);
     inputRef.current?.focus();
@@ -76,17 +76,9 @@ export function KeywordInput({ value, onChange }: KeywordInputProps) {
         onClick={() => inputRef.current?.focus()}
       >
         {keywords.map(kw => (
-          <span
-            key={kw}
-            className="inline-flex items-center gap-1 text-xs border border-border bg-muted/30 px-2 py-0.5"
-          >
+          <span key={kw} className="inline-flex items-center gap-1 text-xs border border-border bg-muted/30 px-2 py-0.5">
             {kw}
-            <button
-              type="button"
-              onClick={() => removeKeyword(kw)}
-              className="text-muted-foreground hover:text-foreground transition-colors"
-              aria-label={`Remove ${kw}`}
-            >
+            <button type="button" onClick={() => removeKeyword(kw)} className="text-muted-foreground hover:text-foreground transition-colors" aria-label={`Remove ${kw}`}>
               <X className="h-3 w-3" />
             </button>
           </span>
@@ -94,10 +86,7 @@ export function KeywordInput({ value, onChange }: KeywordInputProps) {
         <input
           ref={inputRef}
           value={inputValue}
-          onChange={e => {
-            setInputValue(e.target.value);
-            setShowSuggestions(true);
-          }}
+          onChange={e => { setInputValue(e.target.value); setShowSuggestions(true); }}
           onFocus={() => setShowSuggestions(true)}
           onKeyDown={handleKeyDown}
           placeholder={keywords.length === 0 ? "Type a keyword and press Enter or comma…" : ""}
@@ -105,25 +94,16 @@ export function KeywordInput({ value, onChange }: KeywordInputProps) {
           aria-label="Add keyword"
         />
       </div>
-
       {showSuggestions && suggestions.length > 0 && (
         <div className="absolute z-50 top-full left-0 right-0 border border-border bg-background shadow-md mt-0.5 max-h-48 overflow-y-auto">
           {suggestions.map(kw => (
-            <button
-              key={kw}
-              type="button"
-              className="w-full text-left px-3 py-2 text-sm hover:bg-muted/50 transition-colors"
-              onMouseDown={e => { e.preventDefault(); addKeyword(kw); }}
-            >
+            <button key={kw} type="button" className="w-full text-left px-3 py-2 text-sm hover:bg-muted/50 transition-colors" onMouseDown={e => { e.preventDefault(); addKeyword(kw); }}>
               {kw}
             </button>
           ))}
         </div>
       )}
-
-      <p className="text-xs text-muted-foreground mt-1.5">
-        Press Enter or comma to add. Use descriptive terms — style, movement, geography, period, material.
-      </p>
+      <p className="text-xs text-muted-foreground mt-1.5">Press Enter or comma to add. Use descriptive terms — style, movement, geography, period, material.</p>
     </div>
   );
 }
