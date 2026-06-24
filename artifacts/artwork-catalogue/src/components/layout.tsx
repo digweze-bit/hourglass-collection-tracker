@@ -33,7 +33,7 @@ function SidebarNav() {
       <SidebarHeader className="px-6 pt-7 pb-4">
         {ownerName ? (
           <div className="mb-1">
-            <p className="text-[11px] tracking-[0.18em] uppercase font-light text-muted-foreground truncate">{ownerName}</p>
+            <p className="text-[11px] tracking-[0.18em] uppercase font-bold text-muted-foreground truncate">{ownerName}</p>
           </div>
         ) : <div className="mb-1 h-4" />}
       </SidebarHeader>
