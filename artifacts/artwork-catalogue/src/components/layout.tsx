@@ -32,17 +32,10 @@ function SidebarNav() {
     <>
       <SidebarHeader className="px-6 pt-7 pb-4">
         {ownerName ? (
-          <div className="leading-tight mb-1">
-            {ownerName.split(" ").length > 1 ? (
-              <>
-                <p className="text-[13px] tracking-[0.12em] uppercase font-light text-foreground/80">{ownerName.split(" ").slice(0, -1).join(" ")}</p>
-                <p className="text-[13px] tracking-[0.12em] uppercase font-light text-foreground/80">{ownerName.split(" ").slice(-1)[0]}</p>
-              </>
-            ) : (
-              <p className="text-[13px] tracking-[0.12em] uppercase font-light text-foreground/80">{ownerName}</p>
-            )}
+          <div className="mb-1">
+            <p className="text-[11px] tracking-[0.18em] uppercase font-light text-muted-foreground truncate">{ownerName}</p>
           </div>
-        ) : <div className="mb-1 h-8" />}
+        ) : <div className="mb-1 h-4" />}
       </SidebarHeader>
 
       <SidebarContent>
