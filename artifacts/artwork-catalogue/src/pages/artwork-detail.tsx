@@ -680,6 +680,8 @@ export default function ArtworkDetail() {
   const [condForm, setCondForm] = useState({ date: "", condition: "", notes: "", inspector: "" });
   const [showCondForm, setShowCondForm] = useState(false);
   const [docForm, setDocForm] = useState({ name: "", type: "", url: "" });
+  const [docUploading, setDocUploading] = useState(false);
+  const docFileInputRef = useRef<HTMLInputElement>(null);
   const [showDocForm, setShowDocForm] = useState(false);
 
   if (isLoading) return (
@@ -834,16 +836,59 @@ export default function ArtworkDetail() {
             <div className="border border-border p-4 space-y-3">
               <h3 className="text-xs tracking-widest uppercase text-muted-foreground">Add Document</h3>
               <div className="grid grid-cols-2 gap-3">
-                <div><label className="text-xs text-muted-foreground mb-1 block">Name</label><Input placeholder="Certificate, Report..." value={docForm.name} onChange={e => setDocForm(f => ({ ...f, name: e.target.value }))} /></div>
-                <div><label className="text-xs text-muted-foreground mb-1 block">Type</label><Input placeholder="PDF, Certificate..." value={docForm.type} onChange={e => setDocForm(f => ({ ...f, type: e.target.value }))} /></div>
-                <div className="col-span-2"><label className="text-xs text-muted-foreground mb-1 block">URL</label><Input placeholder="https://..." value={docForm.url} onChange={e => setDocForm(f => ({ ...f, url: e.target.value }))} /></div>
+                <div><label className="text-xs text-muted-foreground mb-1 block">Name</label><Input placeholder="Certificate, Invoice..." value={docForm.name} onChange={e => setDocForm(f => ({ ...f, name: e.target.value }))} /></div>
+                <div><label className="text-xs text-muted-foreground mb-1 block">Type</label><Input placeholder="PDF, Image, Invoice..." value={docForm.type} onChange={e => setDocForm(f => ({ ...f, type: e.target.value }))} /></div>
+              </div>
+              {/* File upload */}
+              <div>
+                <label className="text-xs text-muted-foreground mb-1 block">Upload file (image or PDF)</label>
+                <div
+                  className="border border-dashed border-border p-4 text-center cursor-pointer hover:border-primary/50 transition-colors"
+                  onClick={() => docFileInputRef.current?.click()}
+                >
+                  {docForm.url ? (
+                    <div className="space-y-2">
+                      {docForm.url.startsWith("data:image") ? (
+                        <img src={docForm.url} alt="Preview" className="max-h-24 mx-auto object-contain" />
+                      ) : (
+                        <p className="text-xs text-muted-foreground">File attached</p>
+                      )}
+                      <p className="text-xs text-primary hover:underline">Click to replace</p>
+                    </div>
+                  ) : (
+                    <div>
+                      <p className="text-xs text-muted-foreground">Click to upload image or PDF</p>
+                      <p className="text-[10px] text-muted-foreground/60 mt-1">Or paste a URL below</p>
+                    </div>
+                  )}
+                  <input
+                    ref={docFileInputRef}
+                    type="file"
+                    accept="image/*,.pdf"
+                    className="hidden"
+                    onChange={async e => {
+                      const file = e.target.files?.[0];
+                      if (!file) return;
+                      setDocUploading(true);
+                      if (!docForm.name) setDocForm(f => ({ ...f, name: file.name.replace(/\.[^.]+$/, ""), type: file.type.includes("pdf") ? "PDF" : "Image" }));
+                      const reader = new FileReader();
+                      reader.onload = ev => { setDocForm(f => ({ ...f, url: ev.target?.result as string })); setDocUploading(false); };
+                      reader.readAsDataURL(file);
+                    }}
+                  />
+                </div>
+              </div>
+              {/* Or paste URL */}
+              <div>
+                <label className="text-xs text-muted-foreground mb-1 block">Or paste a URL</label>
+                <Input placeholder="https://..." value={docForm.url.startsWith("data:") ? "" : docForm.url} onChange={e => setDocForm(f => ({ ...f, url: e.target.value }))} />
               </div>
               <div className="flex gap-2">
-                <Button size="sm" onClick={() => {
+                <Button size="sm" disabled={!docForm.name || docUploading} onClick={() => {
                   addDocument.mutate({ artwork_id: artworkId, name: docForm.name, type: docForm.type || undefined, url: docForm.url || undefined } as any, {
                     onSuccess: () => { toast({ title: "Document added" }); setShowDocForm(false); setDocForm({ name: "", type: "", url: "" }); qc.invalidateQueries({ queryKey: QK.documents(artworkId) }); },
                   });
-                }}>Save</Button>
+                }}>{docUploading ? "Uploading..." : "Save"}</Button>
                 <Button size="sm" variant="ghost" onClick={() => setShowDocForm(false)}>Cancel</Button>
               </div>
             </div>
@@ -852,9 +897,23 @@ export default function ArtworkDetail() {
           <div className="divide-y divide-border">
             {documents?.map(doc => (
               <div key={doc.id} className="py-4 flex items-center justify-between group">
-                <div className="flex items-center gap-3"><FileText className="h-4 w-4 text-muted-foreground flex-shrink-0" /><div><p className="text-sm">{doc.name}</p>{doc.type && <p className="text-xs text-muted-foreground">{doc.type}</p>}</div></div>
+                <div className="flex items-center gap-3">
+                  {doc.url && doc.url.startsWith("data:image") ? (
+                    <img src={doc.url} alt={doc.name} className="h-10 w-10 object-cover flex-shrink-0 border border-border" />
+                  ) : (
+                    <FileText className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                  )}
+                  <div>
+                    <p className="text-sm">{doc.name}</p>
+                    {doc.type && <p className="text-xs text-muted-foreground">{doc.type}</p>}
+                  </div>
+                </div>
                 <div className="flex items-center gap-2">
-                  {doc.url && <a href={doc.url} target="_blank" rel="noopener noreferrer" className="text-xs text-primary hover:underline">Open</a>}
+                  {doc.url && (
+                    <a href={doc.url} target="_blank" rel="noopener noreferrer" className="text-xs text-primary hover:underline">
+                      {doc.url.startsWith("data:") ? "View" : "Open"}
+                    </a>
+                  )}
                   <Button variant="ghost" size="icon" className="h-7 w-7 opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive" onClick={() => deleteDocument.mutate({ id: doc.id, artworkId }, { onSuccess: () => qc.invalidateQueries({ queryKey: QK.documents(artworkId) }) })}><Trash2 className="h-3 w-3" /></Button>
                 </div>
               </div>
