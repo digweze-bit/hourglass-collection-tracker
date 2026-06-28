@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useParams, Link } from "wouter";
 import {
   useGetArtwork, useUpdateArtwork, useListLocations,
