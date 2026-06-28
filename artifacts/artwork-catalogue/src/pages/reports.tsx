@@ -15,6 +15,7 @@ type Artwork = {
 };
 
 const REPORT_TYPES = [
+  { value: "", label: "— Select a report —" },
   { value: "all", label: "All Artworks" },
   { value: "by_artist", label: "By Artist" },
   { value: "by_location", label: "By Location" },
@@ -83,7 +84,7 @@ function ArtworkRow({ artwork, index, showValue }: { artwork: any; index: number
 }
 
 export default function Reports() {
-  const [reportType, setReportType] = useState("all");
+  const [reportType, setReportType] = useState("");
   const [filterArtist, setFilterArtist] = useState("all");
   const [filterLocation, setFilterLocation] = useState("all");
   const [filterMedium, setFilterMedium] = useState("all");
@@ -93,7 +94,7 @@ export default function Reports() {
   const [dateTo, setDateTo] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
 
-  const { data: artworks = [], isLoading } = useListArtworks();
+  const { data: artworks = [], isLoading } = useListArtworks({ enabled: !!reportType } as any);
   const { data: allLoans = [] } = useListLoans();
   const { data: summary } = useGetSummary();
 
@@ -327,8 +328,16 @@ export default function Reports() {
         </div>
       </div>
 
+      {/* Empty state — no report selected */}
+      {!reportType && (
+        <div className="text-center py-24 space-y-3 print:hidden">
+          <FileText className="h-10 w-10 mx-auto opacity-15" />
+          <p className="text-muted-foreground text-sm">Select a report type above to get started.</p>
+        </div>
+      )}
+
       {/* ── Report output ── */}
-      <div className="print-report">
+      {!!reportType && <div className="print-report">
         {/* Report header — shown in print */}
         <div className="mb-8 print:mb-6">
           <div className="border-b-2 border-foreground pb-4 mb-2">
@@ -407,7 +416,7 @@ export default function Reports() {
             ))}
           </div>
         )}
-      </div>
+      </div>}
     </div>
   );
 }
