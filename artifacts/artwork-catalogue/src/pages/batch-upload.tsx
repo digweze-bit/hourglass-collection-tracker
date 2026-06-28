@@ -1,6 +1,7 @@
 import { useState, useCallback, useMemo, useRef } from "react";
 import { useCreateArtwork, useListArtworks, useListLocations } from "@/hooks/use-db";
 import { useQueryClient } from "@tanstack/react-query";
+import { resizeAndUpload } from "@/lib/image-upload";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -62,22 +63,12 @@ async function readImageMeta(file: File): Promise<{ title?: string; artist?: str
 
 type FocalPosition = "top" | "center" | "bottom";
 type UploadItem = {
-  id: string;
-  file: File;
-  previewUrl: string;
-  title: string;
-  artist: string;
-  year: string;
-  medium: string;
-  width: string;
-  height: string;
-  depth: string;
-  dimensionUnit: string;
-  locationId: string;
-  focalPosition: FocalPosition;
+  id: string; file: File; previewUrl: string;
+  title: string; artist: string; year: string; medium: string;
+  width: string; height: string; depth: string; dimensionUnit: string;
+  locationId: string; focalPosition: FocalPosition;
   status: "pending" | "uploading" | "done" | "error";
-  error?: string;
-  expanded: boolean;
+  error?: string; expanded: boolean;
 };
 
 function AutocompleteInput({ id, suggestions, value, onChange, placeholder }: {
@@ -100,11 +91,11 @@ function FocalThumbnail({ src, focal, onChange }: { src: string; focal: FocalPos
       </div>
       <div className="flex gap-0.5">
         {(["top", "center", "bottom"] as FocalPosition[]).map(pos => (
-          <button key={pos} type="button" onClick={() => onChange(pos)} title={`Crop: ${pos}`}
+          <button key={pos} type="button" onClick={() => onChange(pos)}
             className={`flex-1 h-1.5 rounded-sm transition-colors ${focal === pos ? "bg-primary" : "bg-muted-foreground/30 hover:bg-muted-foreground/60"}`} />
         ))}
       </div>
-      <p className="text-[9px] text-muted-foreground text-center leading-none">{focal}</p>
+      <p className="text-[9px] text-muted-foreground text-center">{focal}</p>
     </div>
   );
 }
@@ -129,21 +120,12 @@ export default function BatchUpload() {
     const newItems: UploadItem[] = await Promise.all(imageFiles.map(async file => {
       const meta = await readImageMeta(file);
       return {
-        id: `${Date.now()}-${Math.random()}`,
-        file,
+        id: `${Date.now()}-${Math.random()}`, file,
         previewUrl: URL.createObjectURL(file),
-        title: meta.title || "",
-        artist: meta.artist || "",
-        year: meta.year || "",
-        medium: "",
-        width: "",
-        height: "",
-        depth: "",
-        dimensionUnit: "cm",
-        locationId: "",
-        focalPosition: "center" as FocalPosition,
-        status: "pending" as const,
-        expanded: true,
+        title: meta.title || "", artist: meta.artist || "", year: meta.year || "",
+        medium: "", width: "", height: "", depth: "", dimensionUnit: "cm",
+        locationId: "", focalPosition: "center" as FocalPosition,
+        status: "pending" as const, expanded: true,
       };
     }));
     setItems(prev => [...prev, ...newItems]);
@@ -152,8 +134,6 @@ export default function BatchUpload() {
   const updateItem = (id: string, patch: Partial<UploadItem>) =>
     setItems(prev => prev.map(it => it.id === id ? { ...it, ...patch } : it));
   const removeItem = (id: string) => setItems(prev => prev.filter(it => it.id !== id));
-  const fileToDataUrl = (file: File): Promise<string> =>
-    new Promise((resolve, reject) => { const r = new FileReader(); r.onload = () => resolve(r.result as string); r.onerror = reject; r.readAsDataURL(file); });
 
   const handleSubmitAll = async () => {
     const pending = items.filter(it => it.status === "pending");
@@ -162,7 +142,8 @@ export default function BatchUpload() {
     for (const item of pending) {
       updateItem(item.id, { status: "uploading" });
       try {
-        const image_url = await fileToDataUrl(item.file);
+        // Resize and upload to Supabase Storage
+        const image_url = await resizeAndUpload(item.file, 1200, 0.82);
         await new Promise<void>((resolve, reject) => {
           createArtwork.mutate({
             title: item.title || item.file.name,
@@ -181,8 +162,8 @@ export default function BatchUpload() {
           });
         });
         updateItem(item.id, { status: "done" });
-      } catch {
-        updateItem(item.id, { status: "error", error: "Failed to save" });
+      } catch (err: any) {
+        updateItem(item.id, { status: "error", error: err?.message || "Upload failed" });
       }
     }
     qc.invalidateQueries({ queryKey: ["artworks"] });
@@ -197,7 +178,7 @@ export default function BatchUpload() {
     <div className="space-y-10 max-w-3xl">
       <header>
         <h1 className="text-3xl font-serif tracking-tight">Batch Upload</h1>
-        <p className="text-muted-foreground mt-1 font-light">Upload multiple artworks at once. IPTC image tags will pre-fill fields where available.</p>
+        <p className="text-muted-foreground mt-1 font-light">Upload multiple artworks at once. Images are auto-resized to max 1200px before upload.</p>
       </header>
 
       <div
@@ -208,7 +189,7 @@ export default function BatchUpload() {
       >
         <Upload className="h-8 w-8 mx-auto mb-3 text-muted-foreground" />
         <p className="text-sm font-medium">Drop images here or click to browse</p>
-        <p className="text-xs text-muted-foreground mt-1">JPEG, PNG, WebP · IPTC tags auto-read</p>
+        <p className="text-xs text-muted-foreground mt-1">JPEG, PNG, WebP · Auto-resized · IPTC tags auto-read</p>
         <input ref={fileInputRef} type="file" multiple accept="image/*" className="hidden" onChange={e => e.target.files && handleFiles(e.target.files)} />
       </div>
 
@@ -219,19 +200,18 @@ export default function BatchUpload() {
             <div className="flex gap-2">
               <Button variant="outline" size="sm" onClick={() => setItems([])} disabled={submitting}>Clear all</Button>
               <Button size="sm" onClick={handleSubmitAll} disabled={submitting || pendingCount === 0}>
-                {submitting ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Saving...</> : `Save ${pendingCount} artwork${pendingCount !== 1 ? "s" : ""}`}
+                {submitting ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Uploading...</> : `Save ${pendingCount} artwork${pendingCount !== 1 ? "s" : ""}`}
               </Button>
             </div>
           </div>
 
           {items.map(item => (
             <div key={item.id} className="border border-border">
-              {/* Header row */}
               <div className="flex items-center gap-4 p-3">
                 <FocalThumbnail src={item.previewUrl} focal={item.focalPosition} onChange={f => updateItem(item.id, { focalPosition: f })} />
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium truncate">{item.title || item.file.name}</p>
-                  <p className="text-xs text-muted-foreground truncate">{item.artist || "No artist"}{item.year ? ` · ${item.year}` : ""}</p>
+                  <p className="text-xs text-muted-foreground">{item.artist || "No artist"}{item.year ? ` · ${item.year}` : ""}</p>
                 </div>
                 <div className="flex items-center gap-2 flex-shrink-0">
                   {item.status === "done" && <CheckCircle className="h-4 w-4 text-green-500" />}
@@ -248,7 +228,6 @@ export default function BatchUpload() {
                 </div>
               </div>
 
-              {/* Expanded fields */}
               {item.expanded && item.status === "pending" && (
                 <div className="border-t border-border px-3 pb-3 pt-3 grid grid-cols-2 gap-3">
                   <div className="col-span-2">
@@ -267,8 +246,6 @@ export default function BatchUpload() {
                     <label className="text-[10px] uppercase tracking-widest text-muted-foreground mb-1 block">Medium</label>
                     <AutocompleteInput id={`medium-${item.id}`} suggestions={mediumSuggestions} value={item.medium} onChange={v => updateItem(item.id, { medium: v })} placeholder="e.g. Oil on canvas" />
                   </div>
-
-                  {/* Dimensions */}
                   <div className="col-span-2">
                     <label className="text-[10px] uppercase tracking-widest text-muted-foreground mb-1 block">Dimensions (H × W × D)</label>
                     <div className="grid grid-cols-4 gap-2">
@@ -285,7 +262,6 @@ export default function BatchUpload() {
                       </Select>
                     </div>
                   </div>
-
                   <div className="col-span-2">
                     <label className="text-[10px] uppercase tracking-widest text-muted-foreground mb-1 block">Location</label>
                     <Select value={item.locationId || "none"} onValueChange={v => updateItem(item.id, { locationId: v === "none" ? "" : v })}>
@@ -296,8 +272,6 @@ export default function BatchUpload() {
                       </SelectContent>
                     </Select>
                   </div>
-
-                  {/* Focal point */}
                   <div className="col-span-2">
                     <label className="text-[10px] uppercase tracking-widest text-muted-foreground mb-1 block">Thumbnail crop</label>
                     <div className="flex gap-2">
