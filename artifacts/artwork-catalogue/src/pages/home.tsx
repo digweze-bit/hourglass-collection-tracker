@@ -25,14 +25,22 @@ export default function Home() {
     return sorted.filter(a => a.id !== featuredArtwork?.id).slice(0, 4);
   }, [artworks, featuredArtwork]);
 
-  // Artist list
-  const artists = useMemo(() => {
-    const seen = new Set<string>();
-    const list: string[] = [];
+  // Most recently added artists (by most recent artwork created_at)
+  const recentArtists = useMemo(() => {
+    if (!artworks.length) return [];
+    // For each artist, find their most recent artwork date
+    const artistLatest = new Map<string, number>();
     for (const a of artworks) {
-      if (a.artist && !seen.has(a.artist)) { seen.add(a.artist); list.push(a.artist); }
+      if (!a.artist) continue;
+      const t = new Date(a.created_at).getTime();
+      if (!artistLatest.has(a.artist) || t > artistLatest.get(a.artist)!) {
+        artistLatest.set(a.artist, t);
+      }
     }
-    return list.slice(0, 6);
+    return Array.from(artistLatest.entries())
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 10)
+      .map(([artist]) => artist);
   }, [artworks]);
 
   function handleSearch(e: React.FormEvent) {
@@ -114,12 +122,12 @@ export default function Home() {
         </section>
       )}
 
-      {/* Artists strip */}
-      {artists.length > 0 && (
+      {/* Recently added artists */}
+      {recentArtists.length > 0 && (
         <section className="pb-8">
-          <p className="text-[10px] uppercase tracking-widest text-muted-foreground mb-4 border-b border-border pb-2">Artists</p>
+          <p className="text-[10px] uppercase tracking-widest text-muted-foreground mb-4 border-b border-border pb-2">Recently added artists</p>
           <div className="space-y-0">
-            {artists.map(artist => (
+            {recentArtists.map(artist => (
               <Link
                 key={artist}
                 href={`/artworks?artist=${encodeURIComponent(artist)}`}
