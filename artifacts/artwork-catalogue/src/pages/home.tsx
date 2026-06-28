@@ -54,7 +54,7 @@ export default function Home() {
 
       {/* Hero image — full width, fades into white */}
       {featuredArtwork?.image_url ? (
-        <Link href={`/artworks/${featuredArtwork.id}`} className="block relative -mx-6 md:-mx-12">
+        <div className="relative -mx-6 md:-mx-12 cursor-pointer" onClick={() => navigate(`/artworks/${featuredArtwork.id}`)}>
           <div className="relative overflow-hidden" style={{ height: "55vw", maxHeight: "420px", minHeight: "240px" }}>
             <img
               src={featuredArtwork.image_url}
@@ -62,9 +62,9 @@ export default function Home() {
               className="w-full h-full object-cover object-center"
             />
             {/* Fade to page background at bottom */}
-            <div className="absolute inset-0" style={{ background: "linear-gradient(to top, hsl(var(--background)) 0%, transparent 40%)" }} />
+            <div className="absolute inset-0 pointer-events-none" style={{ background: "linear-gradient(to top, hsl(var(--background)) 0%, transparent 40%)" }} />
           </div>
-        </Link>
+        </div>
       ) : !isLoading && (
         <div className="relative -mx-6 md:-mx-12 bg-muted/20" style={{ height: "300px" }}>
           <div className="absolute inset-0 flex items-center justify-center">
@@ -73,9 +73,9 @@ export default function Home() {
         </div>
       )}
 
-      {/* Title block — sits just below the fade */}
+      {/* Title block */}
       {featuredArtwork && (
-        <Link href={`/artworks/${featuredArtwork.id}`} className="block pt-3 pb-6 space-y-1">
+        <div className="pt-3 pb-6 space-y-1 cursor-pointer" onClick={() => navigate(`/artworks/${featuredArtwork.id}`)}>
           <h2 className="font-serif text-xl leading-tight text-foreground hover:text-primary transition-colors">
             {featuredArtwork.title}
           </h2>
@@ -84,7 +84,7 @@ export default function Home() {
             {featuredArtwork.year ? `, ${featuredArtwork.year}` : ""}
             {featuredArtwork.medium ? ` · ${featuredArtwork.medium}` : ""}
           </p>
-        </Link>
+        </div>
       )}
 
       {/* Prominent search */}
@@ -107,7 +107,7 @@ export default function Home() {
           </div>
           <div className="grid grid-cols-2 gap-4">
             {recentArtworks.map(artwork => (
-              <Link key={artwork.id} href={`/artworks/${artwork.id}`} className="group block">
+              <div key={artwork.id} className="group cursor-pointer" onClick={() => navigate(`/artworks/${artwork.id}`)}>
                 <div className="aspect-square bg-muted/30 overflow-hidden mb-2">
                   {artwork.image_url
                     ? <img src={artwork.image_url} alt={artwork.title} className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-700 ease-out" />
@@ -116,7 +116,7 @@ export default function Home() {
                 </div>
                 <p className="font-serif text-sm leading-tight group-hover:text-primary transition-colors line-clamp-1">{artwork.title}</p>
                 <p className="text-xs text-muted-foreground mt-0.5">{artwork.artist || "Unknown"}</p>
-              </Link>
+              </div>
             ))}
           </div>
         </section>
