@@ -94,7 +94,7 @@ export default function Reports() {
   const [dateTo, setDateTo] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
 
-  const { data: artworks = [], isLoading } = useListArtworks({ enabled: !!reportType } as any);
+  const { data: artworks = [], isLoading } = useListArtworks();
   const { data: allLoans = [] } = useListLoans();
   const { data: summary } = useGetSummary();
 
