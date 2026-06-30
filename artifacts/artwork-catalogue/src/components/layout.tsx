@@ -7,6 +7,7 @@ import {
 import { Home, Library, MapPin, CalendarClock, FileText, Plus, Settings, Users, Target, Upload, LogOut } from "lucide-react";
 import { useAuth } from "@/context/auth-context";
 import { Button } from "@/components/ui/button";
+import { OfflineBanner } from "@/components/offline-banner";
 
 const navItems = [
   { label: "Home", href: "/", icon: Home },
@@ -99,6 +100,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
           <SidebarNav />
         </Sidebar>
         <SidebarInset className="flex-1 flex flex-col min-w-0 overflow-hidden bg-background">
+          <OfflineBanner />
           <header className="h-14 border-b border-border/50 flex items-center px-6 lg:hidden">
             <SidebarTrigger />
             <span className="ml-4 text-sm tracking-widest uppercase text-muted-foreground font-light">Collection Tracker</span>

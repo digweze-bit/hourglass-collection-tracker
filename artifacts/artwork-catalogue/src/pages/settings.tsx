@@ -1,5 +1,5 @@
 import { useState, useRef } from "react";
-import { useListArtworks } from "@workspace/api-client-react";
+import { useListArtworks } from "@/hooks/use-db";
 import { useSettings } from "@/hooks/use-settings";
 import { hashPassword } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Eye, EyeOff, X } from "lucide-react";
+import { OfflineSettingsSection } from "@/components/offline-settings-section";
 
 const BUILT_IN_CURRENCIES = ["USD", "EUR", "GBP", "CHF", "JPY", "CNY", "AUD", "CAD", "HKD", "NGN"];
 
@@ -23,7 +24,7 @@ export default function Settings() {
   const [usePassword, setUsePassword] = useState(settings.usePassword);
   const [passwordMsg, setPasswordMsg] = useState("");
   const [openingMode, setOpeningMode] = useState<"fixed" | "random">(settings.openingMode);
-  const [pinnedArtworkId, setPinnedArtworkId] = useState<number | null>(settings.pinnedArtworkId);
+  const [pinnedArtworkId, setPinnedArtworkId] = useState<string | null>(settings.pinnedArtworkId as any);
   const [saved, setSaved] = useState(false);
   const [newCurrency, setNewCurrency] = useState("");
   const [currencyError, setCurrencyError] = useState("");
@@ -39,7 +40,7 @@ export default function Settings() {
       setNewPassword(""); setConfirmPassword("");
     }
     if (usePassword && !passwordHash) { setPasswordMsg("Please set a password before enabling login protection."); return; }
-    saveSettings({ ...settings, collectionOwner: collectionOwner.trim(), userEmail: userEmail.trim(), passwordHash, usePassword: usePassword && !!passwordHash, openingMode, pinnedArtworkId });
+    saveSettings({ ...settings, collectionOwner: collectionOwner.trim(), userEmail: userEmail.trim(), passwordHash, usePassword: usePassword && !!passwordHash, openingMode, pinnedArtworkId: pinnedArtworkId as any });
     setSaved(true);
     setTimeout(() => setSaved(false), 2500);
   }
@@ -56,7 +57,7 @@ export default function Settings() {
   }
 
   function removeCurrency(code: string) {
-    saveSettings({ ...settings, customCurrencies: settings.customCurrencies.filter((c) => c !== code) });
+    saveSettings({ ...settings, customCurrencies: settings.customCurrencies.filter(c => c !== code) });
   }
 
   return (
@@ -73,7 +74,7 @@ export default function Settings() {
         </div>
         <div className="space-y-2">
           <Label htmlFor="collection-owner" className="text-sm">Collection owner name</Label>
-          <Input id="collection-owner" value={collectionOwner} onChange={(e) => setCollectionOwner(e.target.value)} placeholder="e.g. Dozie Igweike" className="max-w-xs" />
+          <Input id="collection-owner" value={collectionOwner} onChange={e => setCollectionOwner(e.target.value)} placeholder="e.g. Dozie Igweike" className="max-w-xs" />
         </div>
       </section>
 
@@ -84,27 +85,27 @@ export default function Settings() {
         </div>
         <div className="space-y-2">
           <Label htmlFor="user-email" className="text-sm">Email address</Label>
-          <Input id="user-email" type="email" value={userEmail} onChange={(e) => setUserEmail(e.target.value)} placeholder="you@example.com" className="max-w-xs" />
+          <Input id="user-email" type="email" value={userEmail} onChange={e => setUserEmail(e.target.value)} placeholder="you@example.com" className="max-w-xs" />
         </div>
         <div className="space-y-4 pt-2">
           <p className="text-sm font-medium">{settings.passwordHash ? "Change password" : "Set password"}</p>
           <div className="space-y-2">
             <Label htmlFor="new-password" className="text-sm text-muted-foreground">{settings.passwordHash ? "New password" : "Password"}</Label>
             <div className="relative max-w-xs">
-              <Input id="new-password" type={showPassword ? "text" : "password"} value={newPassword} onChange={(e) => { setNewPassword(e.target.value); setPasswordMsg(""); }} placeholder="Minimum 6 characters" className="pr-10 text-sm" />
-              <button type="button" onClick={() => setShowPassword((v) => !v)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
+              <Input id="new-password" type={showPassword ? "text" : "password"} value={newPassword} onChange={e => { setNewPassword(e.target.value); setPasswordMsg(""); }} placeholder="Minimum 6 characters" className="pr-10 text-sm" />
+              <button type="button" onClick={() => setShowPassword(v => !v)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
                 {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
               </button>
             </div>
           </div>
           <div className="space-y-2">
             <Label htmlFor="confirm-password" className="text-sm text-muted-foreground">Confirm password</Label>
-            <Input id="confirm-password" type={showPassword ? "text" : "password"} value={confirmPassword} onChange={(e) => { setConfirmPassword(e.target.value); setPasswordMsg(""); }} placeholder="Repeat password" className="max-w-xs text-sm" />
+            <Input id="confirm-password" type={showPassword ? "text" : "password"} value={confirmPassword} onChange={e => { setConfirmPassword(e.target.value); setPasswordMsg(""); }} placeholder="Repeat password" className="max-w-xs text-sm" />
           </div>
           {passwordMsg && <p className={`text-xs ${passwordMsg.includes("updated") ? "text-green-600" : "text-destructive"}`}>{passwordMsg}</p>}
         </div>
         <div className="flex items-start gap-3 pt-2">
-          <Checkbox id="use-password" checked={usePassword} onCheckedChange={(checked) => setUsePassword(checked === true)} />
+          <Checkbox id="use-password" checked={usePassword} onCheckedChange={checked => setUsePassword(checked === true)} />
           <div>
             <Label htmlFor="use-password" className="text-sm font-medium cursor-pointer">Require password to open app</Label>
             <p className="text-xs text-muted-foreground mt-0.5">When enabled, a password prompt appears each time the app is opened in a new browser session.{!settings.passwordHash && " You must set a password above first."}</p>
@@ -117,7 +118,7 @@ export default function Settings() {
           <h2 className="text-base font-medium mb-1">Opening screen</h2>
           <p className="text-sm text-muted-foreground mb-4">Choose what appears on the home screen when you open the app.</p>
         </div>
-        <RadioGroup value={openingMode} onValueChange={(v) => setOpeningMode(v as "fixed" | "random")} className="space-y-4">
+        <RadioGroup value={openingMode} onValueChange={v => setOpeningMode(v as "fixed" | "random")} className="space-y-4">
           <div className="flex items-start gap-3">
             <RadioGroupItem value="random" id="mode-random" className="mt-0.5" />
             <Label htmlFor="mode-random" className="cursor-pointer space-y-0.5">
@@ -136,11 +137,11 @@ export default function Settings() {
         {openingMode === "fixed" && (
           <div className="pl-6 space-y-2">
             <Label className="text-sm text-muted-foreground">Featured artwork</Label>
-            <Select value={pinnedArtworkId ? String(pinnedArtworkId) : ""} onValueChange={(v) => setPinnedArtworkId(v ? Number(v) : null)}>
+            <Select value={pinnedArtworkId ?? ""} onValueChange={v => setPinnedArtworkId(v || null)}>
               <SelectTrigger className="w-full"><SelectValue placeholder="Select an artwork…" /></SelectTrigger>
               <SelectContent>
-                {artworks.map((a) => (
-                  <SelectItem key={a.id} value={String(a.id)}>
+                {artworks.map(a => (
+                  <SelectItem key={a.id} value={a.id}>
                     <span className="font-serif">{a.title}</span>
                     {a.artist && <span className="text-muted-foreground ml-2 text-xs">— {a.artist}</span>}
                   </SelectItem>
@@ -162,10 +163,10 @@ export default function Settings() {
           <p className="text-sm text-muted-foreground mb-4">Add extra currency codes to use in pricing. Standard currencies are already included.</p>
         </div>
         <div className="flex flex-wrap gap-2 mb-4">
-          {BUILT_IN_CURRENCIES.map((code) => (
+          {BUILT_IN_CURRENCIES.map(code => (
             <span key={code} className="inline-flex items-center px-2.5 py-1 rounded-sm text-xs font-mono bg-muted text-muted-foreground border border-border">{code}</span>
           ))}
-          {settings.customCurrencies.map((code) => (
+          {settings.customCurrencies.map(code => (
             <span key={code} className="inline-flex items-center gap-1 px-2.5 py-1 rounded-sm text-xs font-mono bg-background border border-border">
               {code}
               <button type="button" onClick={() => removeCurrency(code)} className="text-muted-foreground hover:text-foreground ml-0.5"><X className="h-3 w-3" /></button>
@@ -174,12 +175,14 @@ export default function Settings() {
         </div>
         <div className="flex gap-2 items-start">
           <div className="space-y-1">
-            <Input ref={currencyInputRef} value={newCurrency} onChange={(e) => { setNewCurrency(e.target.value.toUpperCase()); setCurrencyError(""); }} onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addCurrency(); } }} placeholder="e.g. BRL" className="w-28 font-mono uppercase text-sm" maxLength={6} />
+            <Input ref={currencyInputRef} value={newCurrency} onChange={e => { setNewCurrency(e.target.value.toUpperCase()); setCurrencyError(""); }} onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); addCurrency(); } }} placeholder="e.g. BRL" className="w-28 font-mono uppercase text-sm" maxLength={6} />
             {currencyError && <p className="text-xs text-destructive">{currencyError}</p>}
           </div>
           <Button type="button" variant="outline" size="sm" onClick={addCurrency}>Add</Button>
         </div>
       </section>
+
+      <OfflineSettingsSection />
     </div>
   );
 }
