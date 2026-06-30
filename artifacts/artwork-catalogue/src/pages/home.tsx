@@ -52,24 +52,21 @@ export default function Home() {
   return (
     <div className="max-w-2xl mx-auto space-y-0">
 
-      {/* Hero image — full width, fades into white */}
+      {/* Hero image — full width within content area, fades into white */}
       {featuredArtwork?.image_url ? (
-        <div className="relative -mx-6 md:-mx-12 cursor-pointer" onClick={() => navigate(`/artworks/${featuredArtwork.id}`)}>
-          <div className="relative overflow-hidden" style={{ height: "55vw", maxHeight: "420px", minHeight: "240px" }}>
+        <div className="relative cursor-pointer" onClick={() => navigate(`/artworks/${featuredArtwork.id}`)}>
+          <div className="relative overflow-hidden" style={{ aspectRatio: "16 / 11" }}>
             <img
               src={featuredArtwork.image_url}
               alt={featuredArtwork.title}
               className="w-full h-full object-cover object-center"
             />
-            {/* Fade to page background at bottom */}
             <div className="absolute inset-0 pointer-events-none" style={{ background: "linear-gradient(to top, hsl(var(--background)) 0%, transparent 40%)" }} />
           </div>
         </div>
       ) : !isLoading && (
-        <div className="relative -mx-6 md:-mx-12 bg-muted/20" style={{ height: "300px" }}>
-          <div className="absolute inset-0 flex items-center justify-center">
-            <p className="text-xs text-muted-foreground/40 uppercase tracking-widest">No artworks yet</p>
-          </div>
+        <div className="relative bg-muted/20 flex items-center justify-center" style={{ aspectRatio: "16 / 9" }}>
+          <p className="text-xs text-muted-foreground/40 uppercase tracking-widest">No artworks yet</p>
         </div>
       )}
 
@@ -105,7 +102,7 @@ export default function Home() {
             <p className="text-[10px] uppercase tracking-widest text-muted-foreground">Recent acquisitions</p>
             <Link href="/artworks" className="text-[10px] uppercase tracking-widest text-muted-foreground hover:text-foreground transition-colors">View all</Link>
           </div>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
             {recentArtworks.map(artwork => (
               <div key={artwork.id} className="group cursor-pointer" onClick={() => navigate(`/artworks/${artwork.id}`)}>
                 <div className="aspect-square bg-muted/30 overflow-hidden mb-2">
