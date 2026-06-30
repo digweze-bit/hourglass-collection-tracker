@@ -108,8 +108,9 @@ function daysUntil(dateStr: string | null): number | null {
 export function useListArtworks(params?: { search?: string; medium?: string; onLoan?: boolean; locationId?: string; artist?: string }) {
   return useQuery({
     queryKey: QK.artworks(params),
+    staleTime: 30000,
     queryFn: async () => {
-      let q = supabase.from("artworks").select("*").order("created_at", { ascending: false });
+      let q = supabase.from("artworks").select("*, locations(name)").order("created_at", { ascending: false });
       if (params?.search) q = q.or(`title.ilike.%${params.search}%,artist.ilike.%${params.search}%`);
       if (params?.medium) q = q.eq("medium", params.medium);
       if (params?.onLoan !== undefined) q = q.eq("on_loan", params.onLoan);
@@ -117,8 +118,7 @@ export function useListArtworks(params?: { search?: string; medium?: string; onL
       if (params?.artist) q = q.eq("artist", params.artist);
       const { data, error } = await q;
       if (error) throw error;
-      const locMap = await getLocationNameMap();
-      return (data || []).map(a => ({ ...a, location_name: a.location_id ? locMap.get(a.location_id) ?? null : null })) as Artwork[];
+      return (data || []).map((a: any) => ({ ...a, location_name: a.locations?.name ?? null })) as Artwork[];
     },
   });
 }
@@ -126,11 +126,11 @@ export function useListArtworks(params?: { search?: string; medium?: string; onL
 export function useGetArtwork(id: string) {
   return useQuery({
     queryKey: QK.artwork(id),
+    staleTime: 30000,
     queryFn: async () => {
-      const { data, error } = await supabase.from("artworks").select("*").eq("id", id).single();
+      const { data, error } = await supabase.from("artworks").select("*, locations(name)").eq("id", id).single();
       if (error) throw error;
-      const locMap = await getLocationNameMap();
-      return { ...data, location_name: data.location_id ? locMap.get(data.location_id) ?? null : null } as Artwork;
+      return { ...data, location_name: (data as any).locations?.name ?? null } as Artwork;
     },
     enabled: !!id,
   });

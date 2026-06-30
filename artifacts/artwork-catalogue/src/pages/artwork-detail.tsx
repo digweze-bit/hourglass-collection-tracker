@@ -388,7 +388,18 @@ function PricingTab({ artworkId }: { artworkId: string }) {
               {pricing.purchase_price ? (
                 <div className="rounded border border-border px-4 py-3">
                   <p className="text-[10px] uppercase tracking-widest text-muted-foreground">Purchase price</p>
-                  <p className="text-xl font-serif">{fmt(Number(pricing.purchase_price), pricing.purchase_currency || "USD")}</p>
+                  {(pricing.purchase_currency || "USD") === "USD" ? (
+                    <p className="text-xl font-serif">{fmt(Number(pricing.purchase_price), "USD")}</p>
+                  ) : (
+                    <p className="text-xl font-serif">
+                      {fmt(Number(pricing.purchase_price), pricing.purchase_currency || "USD")}
+                      {pricing.usd_conversion_rate ? (
+                        <span className="text-sm font-sans text-muted-foreground ml-2">
+                          ({fmt(Number(pricing.purchase_price) * Number(pricing.usd_conversion_rate), "USD")})
+                        </span>
+                      ) : null}
+                    </p>
+                  )}
                 </div>
               ) : <p className="text-sm text-muted-foreground italic">No pricing recorded.</p>}
             </section>
