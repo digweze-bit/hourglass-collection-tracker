@@ -86,12 +86,11 @@ export default function Home() {
 
       {/* Prominent search */}
       <form onSubmit={handleSearch} className="relative pb-10">
-        <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
         <Input
           value={searchInput}
           onChange={e => setSearchInput(e.target.value)}
           placeholder="Search by title or artist…"
-          className="pl-11 h-12 text-sm bg-background border-border/70 focus-visible:ring-1 shadow-sm"
+          className="h-12 text-sm bg-background border-border/70 focus-visible:ring-1 shadow-sm"
         />
       </form>
 
