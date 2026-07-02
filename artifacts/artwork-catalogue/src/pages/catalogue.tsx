@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Link, useSearch } from "wouter";
+import { Link, useSearch, useLocation } from "wouter";
 import { useListArtworks, useDeleteArtwork, useListLocations } from "@/hooks/use-db";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -21,6 +21,7 @@ const PAGE_SIZE_OPTIONS = [
 
 export default function Catalogue() {
   const searchStr = useSearch();
+  const [, navigate] = useLocation();
   const params = new URLSearchParams(searchStr);
   const [search, setSearch] = useState(params.get("search") || params.get("artist") || "");
   const [filterMedium, setFilterMedium] = useState("all");
@@ -28,8 +29,19 @@ export default function Catalogue() {
   const [filterLocationId, setFilterLocationId] = useState("all");
   const [view, setView] = useState<"grid" | "list">("grid");
   const [pageSize, setPageSize] = useState("20");
-  const [page, setPage] = useState(1);
   const { toast } = useToast();
+
+  const currentPageFromUrl = Math.max(1, Number(params.get("page") || "1"));
+
+  function goToPage(p: number) {
+    const next = new URLSearchParams(searchStr);
+    next.set("page", String(p));
+    navigate(`/artworks?${next.toString()}`);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  // Reset to page 1 whenever filters or page size change
+  useEffect(() => { goToPage(1); }, [search, filterMedium, filterOnLoan, filterLocationId, pageSize]);
 
   const { data: artworks, isLoading } = useListArtworks({
     search: search || undefined,
@@ -40,9 +52,6 @@ export default function Catalogue() {
   const { data: locationTree } = useListLocations();
   const deleteArtwork = useDeleteArtwork();
 
-  // Reset to page 1 whenever filters or page size change
-  useEffect(() => { setPage(1); }, [search, filterMedium, filterOnLoan, filterLocationId, pageSize]);
-
   const flatLocations = (locationTree || []).flatMap(l => [l, ...(l.children || [])]);
   const collectionMediums = [...new Set((artworks || []).map(a => a.medium).filter(Boolean))] as string[];
   const allMediums = [...new Set([...PRESET_MEDIUMS, ...collectionMediums])].sort((a, b) => a.localeCompare(b, undefined, { sensitivity: "base" }));
@@ -50,7 +59,7 @@ export default function Catalogue() {
   const totalCount = artworks?.length ?? 0;
   const size = pageSize === "all" ? totalCount || 1 : Number(pageSize);
   const totalPages = Math.max(1, Math.ceil(totalCount / size));
-  const currentPage = Math.min(page, totalPages);
+  const currentPage = Math.min(currentPageFromUrl, totalPages);
   const pagedArtworks = (artworks || []).slice((currentPage - 1) * size, currentPage * size);
 
   const handleDelete = (id: string) => {
@@ -65,11 +74,11 @@ export default function Catalogue() {
           Showing {(currentPage - 1) * size + 1}–{Math.min(currentPage * size, totalCount)} of {totalCount}
         </p>
         <div className="flex items-center gap-2">
-          <Button variant="ghost" size="icon" className="h-8 w-8" disabled={currentPage <= 1} onClick={() => setPage(p => Math.max(1, p - 1))}>
+          <Button variant="ghost" size="icon" className="h-8 w-8" disabled={currentPage <= 1} onClick={() => goToPage(currentPage - 1)}>
             <ChevronLeft className="h-4 w-4" />
           </Button>
           <span className="text-xs text-muted-foreground tabular-nums px-2">Page {currentPage} of {totalPages}</span>
-          <Button variant="ghost" size="icon" className="h-8 w-8" disabled={currentPage >= totalPages} onClick={() => setPage(p => Math.min(totalPages, p + 1))}>
+          <Button variant="ghost" size="icon" className="h-8 w-8" disabled={currentPage >= totalPages} onClick={() => goToPage(currentPage + 1)}>
             <ChevronRight className="h-4 w-4" />
           </Button>
         </div>
