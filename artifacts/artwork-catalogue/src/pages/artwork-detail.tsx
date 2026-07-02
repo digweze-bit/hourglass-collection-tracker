@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useParams, Link } from "wouter";
 import {
   useGetArtwork, useUpdateArtwork, useListLocations,
@@ -74,23 +74,35 @@ function EditDialog({ artwork, open, onClose, locations }: { artwork: any; open:
   const flat = flattenLocations(locations);
   const form = useForm<z.infer<typeof editSchema>>({
     resolver: zodResolver(editSchema),
-    values: {
-      title: artwork?.title || "",
-      artist: artwork?.artist || "",
-      year: artwork?.year ? String(artwork.year) : "",
-      medium: artwork?.medium || "",
-      keywords: artwork?.keywords || "",
-      width: artwork?.width ? String(artwork.width) : "",
-      height: artwork?.height ? String(artwork.height) : "",
-      depth: artwork?.depth ? String(artwork.depth) : "",
-      dimension_unit: artwork?.dimension_unit || "cm",
-      image_url: artwork?.image_url || "",
-      notes: artwork?.notes || "",
-      location_id: artwork?.location_id || "none",
-      edition_number: artwork?.edition_number ? String(artwork.edition_number) : "",
-      edition_total: artwork?.edition_total ? String(artwork.edition_total) : "",
+    defaultValues: {
+      title: "", artist: "", year: "", medium: "", keywords: "",
+      width: "", height: "", depth: "", dimension_unit: "cm",
+      image_url: "", notes: "", location_id: "none",
+      edition_number: "", edition_total: "",
     },
   });
+
+  // Reset form with artwork data whenever dialog opens
+  useEffect(() => {
+    if (open && artwork) {
+      form.reset({
+        title: artwork.title || "",
+        artist: artwork.artist || "",
+        year: artwork.year ? String(artwork.year) : "",
+        medium: artwork.medium || "",
+        keywords: artwork.keywords || "",
+        width: artwork.width ? String(artwork.width) : "",
+        height: artwork.height ? String(artwork.height) : "",
+        depth: artwork.depth ? String(artwork.depth) : "",
+        dimension_unit: artwork.dimension_unit || "cm",
+        image_url: artwork.image_url || "",
+        notes: artwork.notes || "",
+        location_id: artwork.location_id || "none",
+        edition_number: artwork.edition_number ? String(artwork.edition_number) : "",
+        edition_total: artwork.edition_total ? String(artwork.edition_total) : "",
+      });
+    }
+  }, [open, artwork]);
 
   const onSubmit = (values: z.infer<typeof editSchema>) => {
     if (!artwork) return;
@@ -744,10 +756,16 @@ export default function ArtworkDetail() {
           <dl className="space-y-3">
             {artwork.year && <div className="flex justify-between text-sm border-b border-border/50 pb-3"><dt className="text-muted-foreground">Year</dt><dd>{artwork.year}</dd></div>}
             {artwork.medium && <div className="flex justify-between text-sm border-b border-border/50 pb-3"><dt className="text-muted-foreground">Medium</dt><dd>{artwork.medium}</dd></div>}
-            {(artwork.edition_number || artwork.edition_total) && (
+            {(artwork.edition_number != null || artwork.edition_total != null) && (
               <div className="flex justify-between text-sm border-b border-border/50 pb-3">
                 <dt className="text-muted-foreground">Edition</dt>
-                <dd>{artwork.edition_number && artwork.edition_total ? `${artwork.edition_number} / ${artwork.edition_total}` : artwork.edition_number ? `No. ${artwork.edition_number}` : `of ${artwork.edition_total}`}</dd>
+                <dd>
+                  {artwork.edition_number != null && artwork.edition_total != null
+                    ? `${artwork.edition_number} / ${artwork.edition_total}`
+                    : artwork.edition_number != null
+                    ? `No. ${artwork.edition_number}`
+                    : `of ${artwork.edition_total}`}
+                </dd>
               </div>
             )}
             {(artwork.width || artwork.height) && <div className="flex justify-between text-sm border-b border-border/50 pb-3"><dt className="text-muted-foreground">Dimensions</dt><dd>{formatDimensions(artwork.width ?? null, artwork.height ?? null, artwork.depth ?? null, artwork.dimension_unit ?? null)}</dd></div>}
