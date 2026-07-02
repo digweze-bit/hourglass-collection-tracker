@@ -120,6 +120,8 @@ export default function AddArtwork() {
               <FormField control={form.control} name="editionTotal" render={({field})=>(<FormItem><FormLabel>Edition Total</FormLabel><FormControl><Input type="number" placeholder="e.g. 10" {...field}/></FormControl></FormItem>)}/>
             </div>
           </section>
+          <section className="space-y-6">
+            <h2 className="text-xs tracking-widest uppercase text-muted-foreground border-b border-border pb-2">Image</h2>
             <FormField control={form.control} name="imageUrl" render={({field})=>(<FormItem><FormControl><ImageUpload value={field.value??""} onChange={field.onChange}/></FormControl></FormItem>)}/>
           </section>
           <section className="space-y-6">
