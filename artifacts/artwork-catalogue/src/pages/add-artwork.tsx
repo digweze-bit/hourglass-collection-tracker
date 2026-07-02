@@ -23,6 +23,7 @@ const schema = z.object({
   width: z.string(), height: z.string(), depth: z.string(),
   dimensionUnit: z.string(), imageUrl: z.string(), notes: z.string(),
   locationId: z.string(), keywords: z.string(),
+  editionNumber: z.string(), editionTotal: z.string(),
 });
 type FormValues = z.infer<typeof schema>;
 
@@ -54,7 +55,7 @@ export default function AddArtwork() {
 
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
-    defaultValues: { title:"", artist:"", year:"", medium:"", width:"", height:"", depth:"", dimensionUnit:"cm", imageUrl:"", notes:"", locationId:"", keywords:"" },
+    defaultValues: { title:"", artist:"", year:"", medium:"", width:"", height:"", depth:"", dimensionUnit:"cm", imageUrl:"", notes:"", locationId:"", keywords:"", editionNumber:"", editionTotal:"" },
   });
 
   const onSubmit = (values: FormValues) => {
@@ -65,6 +66,8 @@ export default function AddArtwork() {
       depth: values.depth?Number(values.depth):undefined, dimension_unit: values.dimensionUnit||"cm",
       image_url: values.imageUrl||undefined, notes: values.notes||undefined,
       location_id: values.locationId && values.locationId !== "none" ? values.locationId : undefined,
+      edition_number: values.editionNumber ? Number(values.editionNumber) : undefined,
+      edition_total: values.editionTotal ? Number(values.editionTotal) : undefined,
     } as any, {
       onSuccess: (artwork) => { toast({ title: "Artwork added to catalogue" }); setLocation(`/artworks/${artwork.id}`); },
       onError: () => toast({ title: "Failed to add artwork", variant: "destructive" }),
@@ -110,7 +113,13 @@ export default function AddArtwork() {
             </div>
           </section>
           <section className="space-y-6">
-            <h2 className="text-xs tracking-widest uppercase text-muted-foreground border-b border-border pb-2">Image</h2>
+            <h2 className="text-xs tracking-widest uppercase text-muted-foreground border-b border-border pb-2">Edition</h2>
+            <p className="text-xs text-muted-foreground">For prints, photographs, or any work produced in a limited edition.</p>
+            <div className="grid grid-cols-2 gap-4">
+              <FormField control={form.control} name="editionNumber" render={({field})=>(<FormItem><FormLabel>Edition Number</FormLabel><FormControl><Input type="number" placeholder="e.g. 3" {...field}/></FormControl></FormItem>)}/>
+              <FormField control={form.control} name="editionTotal" render={({field})=>(<FormItem><FormLabel>Edition Total</FormLabel><FormControl><Input type="number" placeholder="e.g. 10" {...field}/></FormControl></FormItem>)}/>
+            </div>
+          </section>
             <FormField control={form.control} name="imageUrl" render={({field})=>(<FormItem><FormControl><ImageUpload value={field.value??""} onChange={field.onChange}/></FormControl></FormItem>)}/>
           </section>
           <section className="space-y-6">

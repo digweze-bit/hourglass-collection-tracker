@@ -9,6 +9,7 @@ export type Artwork = {
   height: number | null; depth: number | null; dimension_unit: string | null;
   image_url: string | null; notes: string | null; location_id: string | null;
   on_loan: boolean; created_at: string; location_name?: string | null;
+  edition_number: number | null; edition_total: number | null;
 };
 
 export type Location = {

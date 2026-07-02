@@ -64,6 +64,8 @@ const editSchema = z.object({
   image_url: z.string(),
   notes: z.string(),
   location_id: z.string(),
+  edition_number: z.string(),
+  edition_total: z.string(),
 });
 
 function EditDialog({ artwork, open, onClose, locations }: { artwork: any; open: boolean; onClose: () => void; locations: Location[] }) {
@@ -85,6 +87,8 @@ function EditDialog({ artwork, open, onClose, locations }: { artwork: any; open:
       image_url: artwork?.image_url || "",
       notes: artwork?.notes || "",
       location_id: artwork?.location_id || "none",
+      edition_number: artwork?.edition_number ? String(artwork.edition_number) : "",
+      edition_total: artwork?.edition_total ? String(artwork.edition_total) : "",
     },
   });
 
@@ -105,6 +109,8 @@ function EditDialog({ artwork, open, onClose, locations }: { artwork: any; open:
         image_url: values.image_url || undefined,
         notes: values.notes || undefined,
         location_id: values.location_id && values.location_id !== "none" ? values.location_id : null,
+        edition_number: values.edition_number ? Number(values.edition_number) : null,
+        edition_total: values.edition_total ? Number(values.edition_total) : null,
       } as any,
     }, {
       onSuccess: () => { toast({ title: "Artwork updated" }); onClose(); },
@@ -123,6 +129,10 @@ function EditDialog({ artwork, open, onClose, locations }: { artwork: any; open:
               <FormField control={form.control} name="year" render={({ field }) => (<FormItem><FormLabel>Year</FormLabel><FormControl><Input type="number" {...field} /></FormControl></FormItem>)} />
             </div>
             <FormField control={form.control} name="medium" render={({ field }) => (<FormItem><FormLabel>Medium</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>)} />
+            <div className="grid grid-cols-2 gap-3">
+              <FormField control={form.control} name="edition_number" render={({ field }) => (<FormItem><FormLabel>Edition No.</FormLabel><FormControl><Input type="number" placeholder="e.g. 3" {...field} /></FormControl></FormItem>)} />
+              <FormField control={form.control} name="edition_total" render={({ field }) => (<FormItem><FormLabel>Edition Total</FormLabel><FormControl><Input type="number" placeholder="e.g. 10" {...field} /></FormControl></FormItem>)} />
+            </div>
             <FormField control={form.control} name="keywords" render={({ field }) => (<FormItem><FormLabel>Keywords</FormLabel><FormControl><KeywordInput value={field.value ?? ""} onChange={field.onChange} /></FormControl></FormItem>)} />
             <div className="grid grid-cols-4 gap-2">
               {(["height", "width", "depth"] as const).map(d => (
@@ -734,6 +744,12 @@ export default function ArtworkDetail() {
           <dl className="space-y-3">
             {artwork.year && <div className="flex justify-between text-sm border-b border-border/50 pb-3"><dt className="text-muted-foreground">Year</dt><dd>{artwork.year}</dd></div>}
             {artwork.medium && <div className="flex justify-between text-sm border-b border-border/50 pb-3"><dt className="text-muted-foreground">Medium</dt><dd>{artwork.medium}</dd></div>}
+            {(artwork.edition_number || artwork.edition_total) && (
+              <div className="flex justify-between text-sm border-b border-border/50 pb-3">
+                <dt className="text-muted-foreground">Edition</dt>
+                <dd>{artwork.edition_number && artwork.edition_total ? `${artwork.edition_number} / ${artwork.edition_total}` : artwork.edition_number ? `No. ${artwork.edition_number}` : `of ${artwork.edition_total}`}</dd>
+              </div>
+            )}
             {(artwork.width || artwork.height) && <div className="flex justify-between text-sm border-b border-border/50 pb-3"><dt className="text-muted-foreground">Dimensions</dt><dd>{formatDimensions(artwork.width ?? null, artwork.height ?? null, artwork.depth ?? null, artwork.dimension_unit ?? null)}</dd></div>}
             {artwork.location_name && <div className="flex justify-between text-sm border-b border-border/50 pb-3"><dt className="text-muted-foreground">Location</dt><dd>{artwork.location_name}</dd></div>}
             {artwork.keywords && (
